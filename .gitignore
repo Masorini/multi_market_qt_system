@@ -1,0 +1,24 @@
+# Python 编译文件
+__pycache__/
+*.py[cod]
+*.so
+
+# 安装包构建输出
+*.egg-info/
+*.egg
+build/
+dist/
+
+# 虚拟环境（如果放在项目内）
+.venv/
+venv/
+
+# 日志、临时文件
+*.log
+*.tmp
+*.swp
+
+# IDE 配置
+.vscode/
+.idea/
+*.egg-info/

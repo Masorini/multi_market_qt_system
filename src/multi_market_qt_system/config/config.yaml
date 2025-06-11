@@ -1,0 +1,21 @@
+mode: backtest            # backtest 或 live
+market_data:              # 数据源配置
+  source: openbb          # openbb 或 vnpy
+brokers:
+  futu:
+    enable: false
+    host: 127.0.0.1
+    port: 11111
+  binance:
+    enable: false
+    api_key: YOUR_API_KEY
+    secret_key: YOUR_SECRET_KEY
+strategy:
+  name: dual_ma
+  params:
+    short_window: 20
+    long_window: 50
+    trade_size: 1
+risk_control:
+  max_position: 100
+  max_drawdown: 0.2
