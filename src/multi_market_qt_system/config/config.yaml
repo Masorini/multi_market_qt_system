@@ -1,6 +1,8 @@
 mode: backtest            # backtest 或 live
+
 market_data:              # 数据源配置
   source: openbb          # openbb 或 vnpy
+
 brokers:
   futu:
     enable: false
@@ -10,12 +12,26 @@ brokers:
     enable: false
     api_key: YOUR_API_KEY
     secret_key: YOUR_SECRET_KEY
+
 strategy:
   name: dual_ma
   params:
     short_window: 20
     long_window: 50
     trade_size: 1
+
 risk_control:
   max_position: 100
   max_drawdown: 0.2
+  max_daily_loss: 5000      # 单日最大亏损（以账户基准货币计）
+  max_daily_trades: 20      # 单日最多交易次数
+
+# 新增全局交易成本参数
+commission: 0.0005    # 每笔成交的手续费率
+slippage: 0.0002      # 滑点率
+
+logging:
+  log_dir:         # 日志文件夹
+  log_file:      # 日志文件名
+  console: false            # 是否输出到控制台
+  level: "debug"             # 日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL
