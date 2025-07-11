@@ -1,3 +1,5 @@
+
+```angular2html
 multi_market_qt_system/           # 根目录
 ├── config/                     # 配置文件目录
 │   └── config.yaml             # 全局配置（API keys、交易所、策略参数）
@@ -39,3 +41,4 @@ multi_market_qt_system/
 ├── tests/                   # 单元测试
 ├── README.md
 └── .gitignore
+```
