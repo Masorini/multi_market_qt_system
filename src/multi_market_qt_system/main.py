@@ -94,7 +94,7 @@ def backtest(ctx, symbol, start, end, provider):
         commission=conf.get('commission', 0.0005),
         slippage=conf.get('slippage', 0.0002)
     )
-    logger.info("Backtester created: initial_cash=%s, commission=%s, slippage=%s", conf.get('initial_cash'),
+    logger.debug("Backtester created: initial_cash=%s, commission=%s, slippage=%s", conf.get('initial_cash'),
                 conf.get('commission'), conf.get('slippage'))
 
     # 5. 执行回测
@@ -114,13 +114,13 @@ def backtest(ctx, symbol, start, end, provider):
 
         # 6. 打印结果
         click.echo(f"\n=== Backtest Results for {sym}: {start} → {end} ===")
-        click.echo(f"Total Return:      {perf.total_return:.2%}")
-        click.echo(f"Annual Return:     {perf.annual_return:.2%}")
-        click.echo(f"Annual Volatility: {perf.annual_volatility:.2%}")
-        click.echo(f"Sharpe Ratio:      {perf.sharpe_ratio:.2f}")
-        click.echo(f"Max Drawdown:      {perf.max_drawdown:.2%}")
-        click.echo(f"Sortino Ratio:     {perf.sortino_ratio:.2f}")
-        click.echo(f"Calmar Ratio:      {perf.calmar_ratio:.2f}")
+        click.echo(f"Total Return:      {perf.total_return:.6%}")
+        click.echo(f"Annual Return:     {perf.annual_return:.6%}")
+        click.echo(f"Annual Volatility: {perf.annual_volatility:.6%}")
+        click.echo(f"Sharpe Ratio:      {perf.sharpe_ratio:.6f}")
+        click.echo(f"Max Drawdown:      {perf.max_drawdown:.6%}")
+        click.echo(f"Sortino Ratio:     {perf.sortino_ratio:.6f}")
+        click.echo(f"Calmar Ratio:      {perf.calmar_ratio:.6f}")
 
         # 7.可视化
         fig = create_performance_dashboard(

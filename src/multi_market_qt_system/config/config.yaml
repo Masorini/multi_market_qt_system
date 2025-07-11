@@ -34,4 +34,4 @@ logging:
   log_dir:         # 日志文件夹
   log_file:      # 日志文件名
   console: false            # 是否输出到控制台
-  level: "debug"             # 日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "DEBUG"             # 日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL

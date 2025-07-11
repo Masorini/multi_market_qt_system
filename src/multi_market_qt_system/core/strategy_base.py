@@ -76,3 +76,15 @@ class StrategyBase(ABC):
         }
         logger.debug("Strategy %s emit signal: %s", self.name, signal)
         self.signals.append(signal)
+
+    @abstractmethod
+    def get_ma_df(self, bar: Dict[str, Any]) -> None:
+        ...
+
+    @abstractmethod
+    def save_ma_history(self, symbol: str, start: str, end: str, folder: str):
+        ...
+
+    @abstractmethod
+    def log_ma_history(self, head_n: int = 5, tail_n: int = 5):
+        ...

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+import os
 from typing import Callable, Optional, Union
 import pandas as pd
 from pydantic import BaseModel, Field, ValidationError
@@ -42,6 +43,7 @@ class DataClient:
         if self.source == 'openbb':
             try:
                 df = obb.equity.price.historical(symbol, start, end, provider).to_df()
+                self.save_df_csv(df, symbol, start, end)
                 print("Columns:", df.columns.tolist(), "\n")
                 logger.debug("Historical data head for %s:\n%s", symbol, df.head(3))
                 return df
@@ -70,3 +72,12 @@ class DataClient:
         #     gateway = VnpyGateway(...) 
         #     gateway.subscribe(symbol, on_tick=callback)
         raise NotImplementedError("实时订阅功能待实现")
+
+    def save_df_csv(self, df, symbol, start, end, folder="/Users/sh01108ml/PycharmProjects/trade-system/src/multi_market_qt_system/data/history_data"):
+        os.makedirs(folder, exist_ok=True)
+        filename = f"{symbol}_{start}_{end}.csv"
+        path = os.path.join(folder, filename)
+        df.to_csv(path, index=True)  # index=True 会把时间戳也存入第一列
+        logger.info("Saved historical DF to %s", path)
+
+

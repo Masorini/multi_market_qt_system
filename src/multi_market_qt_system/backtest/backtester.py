@@ -30,7 +30,8 @@ class Backtester:
         self.initial_cash = initial_cash
         self.commission = commission
         self.slippage = slippage
-        logger.info("Backtester initialized: initial_cash=%s, commission=%s, slippage=%s", initial_cash, commission, slippage)
+        logger.info("Backtester initialized: initial_cash=%s, commission=%s, slippage=%s", initial_cash, commission,
+                    slippage)
 
     def run(
             self,
@@ -113,6 +114,15 @@ class Backtester:
                 # 执行订单
                 portfolio.execute_order(order, market_prices=market_price)
                 logger.debug("Order executed: %s", order)
+
+        # 记录并输出 MA history
+        self.strategy.log_ma_history()
+        self.strategy.save_ma_history(
+            symbol=symbol,
+            start=start,
+            end=end,
+            folder="/Users/sh01108ml/PycharmProjects/trade-system/src/multi_market_qt_system/data/history_data"
+        )
 
         # 4. 计算绩效指标
         perf = PerformanceMetrics.from_portfolio(
