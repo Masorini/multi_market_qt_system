@@ -51,7 +51,7 @@ class PerformanceMetrics:
             .set_index('timestamp')
         )
         equity = df['total_value'].sort_index()
-        logger.debug("Equity series head:% s", equity.head())
+        logger.debug("Equity series head:\n% s", equity.head())
 
         # —— 插入回测/首日初始净值点 —— #
         if price_index is not None:

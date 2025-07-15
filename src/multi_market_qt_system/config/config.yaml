@@ -18,7 +18,7 @@ strategy:
   params:
     short_window: 20
     long_window: 50
-    trade_size: 1
+    trade_size: 20
 
 risk_control:
   max_position: 100
@@ -27,6 +27,7 @@ risk_control:
   max_daily_trades: 20      # 单日最多交易次数
 
 # 新增全局交易成本参数
+initial_cash: 200000
 commission: 0.0005    # 每笔成交的手续费率
 slippage: 0.0002      # 滑点率
 

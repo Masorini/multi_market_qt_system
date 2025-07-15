@@ -26,3 +26,4 @@ venv/
 
 src/multi_market_qt_system/data/history_data/
 src/multi_market_qt_system/logs/logs/
+src/multi_market_qt_system/visualization/reports
