@@ -77,9 +77,9 @@ def backtest(ctx, symbol, start, end, provider):
     # 3. 风控管理器
     rc_conf = conf.get('risk_control', {})
     limits = RiskLimits(
-        max_position=rc_conf.get('max_position', 100),
+        max_position_pct=rc_conf.get('max_position_pct', 0.1),
         max_drawdown=rc_conf.get('max_drawdown', 0.2),
-        max_daily_loss=rc_conf.get('max_daily_loss'),
+        max_daily_loss_pct=rc_conf.get('max_daily_loss_pct'),
         max_daily_trades=rc_conf.get('max_daily_trades')
     )
     risk_mgr = RiskManager(limits)
@@ -92,10 +92,11 @@ def backtest(ctx, symbol, start, end, provider):
         risk_manager=risk_mgr,
         initial_cash=conf.get('initial_cash', 1_000_000),
         commission=conf.get('commission', 0.0005),
-        slippage=conf.get('slippage', 0.0002)
+        slippage=conf.get('slippage', 0.0002),
+        trade_pct=conf.get('trade_pct', 0.05),
     )
     logger.debug("Backtester created: initial_cash=%s, commission=%s, slippage=%s", conf.get('initial_cash'),
-                conf.get('commission'), conf.get('slippage'))
+                 conf.get('commission'), conf.get('slippage'))
 
     # 5. 执行回测
     for sym in symbols:

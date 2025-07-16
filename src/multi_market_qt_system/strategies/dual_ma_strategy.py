@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class DualMAStrategyConfig:
     short_window: int = 20
     long_window: int = 50
-    trade_size: int = 1  # 每次交易手数
+    trade_pct: float = 0.05
 
 
 class DualMAStrategy(StrategyBase):
@@ -92,12 +92,12 @@ class DualMAStrategy(StrategyBase):
         # 金叉开多
         if prev_short_ma <= prev_long_ma and short_ma > long_ma:
             logger.info("Golden cross BUY signal for %s at %.2f", sym, price)
-            self.emit_signal(ts, sym, 'BUY', price, self.config.trade_size)
+            self.emit_signal(ts, sym, 'BUY', price)
 
         # 死叉平多
         elif prev_short_ma >= prev_long_ma and short_ma < long_ma:
             logger.info("Death cross SELL signal for %s at %.2f", sym, price)
-            self.emit_signal(ts, sym, 'SELL', price, self.config.trade_size)
+            self.emit_signal(ts, sym, 'SELL', price)
 
     def get_ma_df(self) -> pd.DataFrame:
         """

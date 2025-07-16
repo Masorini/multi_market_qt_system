@@ -1,6 +1,7 @@
 import logging
 
 from multi_market_qt_system.core.data_client import DataClient
+from multi_market_qt_system.core.position_sizer import PositionSizer
 from multi_market_qt_system.core.risk_manager import RiskManager
 from multi_market_qt_system.core.strategy_base import StrategyBase
 from multi_market_qt_system.core.order import Order, OrderType, OrderStyle
@@ -22,7 +23,8 @@ class Backtester:
             risk_manager: RiskManager,
             initial_cash: float = 1_000_000,
             commission: float = 0.0005,
-            slippage: float = 0.0002
+            slippage: float = 0.0002,
+            trade_pct: float = 0.05
     ):
         self.data_client = data_client
         self.strategy = strategy
@@ -30,6 +32,7 @@ class Backtester:
         self.initial_cash = initial_cash
         self.commission = commission
         self.slippage = slippage
+        self.position_sizer = PositionSizer(trade_pct)
         logger.info("Backtester initialized: initial_cash=%s, commission=%s, slippage=%s", initial_cash, commission,
                     slippage)
 
@@ -84,6 +87,8 @@ class Backtester:
             logger.debug("Processing bar for %s at %s: close=%.2f", symbol, row.timestamp, row.close)
             # 3.1 生成信号
             signals = self.strategy.on_bar(bar)
+            quantity = self.position_sizer.size(portfolio.cash, row.close)
+            portfolio.total_signals += len(signals)
 
             # 3.2 依次处理信号：风控 + 执行
             for sig in signals:
@@ -95,7 +100,7 @@ class Backtester:
                 order = Order(
                     timestamp=sig['timestamp'],
                     symbol=sig['symbol'],
-                    quantity=sig['quantity'],
+                    quantity=quantity,  # TODO: sig['quantity'] 没用了，将其删除
                     price=sig['price'],
                     order_type=OrderType.BUY if sig['action'] == 'BUY' else OrderType.SELL,
                     style=OrderStyle.MARKET,
@@ -106,9 +111,14 @@ class Backtester:
                 # 当前市价
                 market_price = {symbol: row.close}
 
-                # 风控校验
+                # 风控校验并统计拒单
                 if not self.risk_manager.validate(order, market_price, portfolio):
-                    logger.info("Order blocked by risk manager: %s", order)
+                    reason = "risk limit breach"
+                    logger.info("Order blocked by risk manager: %s, reason: %s", order, reason)
+                    portfolio.rejected.append({
+                        "order": order,
+                        "reason": reason
+                    })
                     continue
 
                 # 执行订单

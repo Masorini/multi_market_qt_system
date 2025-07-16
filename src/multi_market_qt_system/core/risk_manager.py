@@ -2,17 +2,16 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, Any, Union, List, Callable, Tuple
 import logging
-from multi_market_qt_system.core.order import OrderType
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class RiskLimits:
-    max_position: int = field(default=100, metadata={"desc": "单标的最大持仓量"})
+    max_position_pct: float = field(default=0.1, metadata={"desc": "单标的最大持仓比例"})
     max_drawdown: float = field(default=0.2, metadata={"desc": "最大回撤率"})
-    max_daily_loss: float = field(default=None, metadata={"desc": "当日最大亏损"})
-    max_daily_trades: int = field(default=None, metadata={"desc": "当日最大交易次数"})
+    max_daily_loss_pct: float = field(default=0.02, metadata={"desc": "单日最大亏损比例"})
+    max_daily_trades: int = field(default=20, metadata={"desc": "当日最大交易次数"})
 
 
 class RiskManager:
@@ -25,10 +24,7 @@ class RiskManager:
         self.start_equity: float = 0.0
         self.peak_equity: float = 0.0
         self.current_date: datetime.date = None
-        self.daily_loss: float = 0.0
-        self.daily_trades: int = 0
         self.custom_rules: List[Callable] = []  # List of (order, portfolio) -> (bool, reason)
-
         logger.info("RiskManager initialized with limits: %s", limits)
 
     def register_rule(self, rule_func: Callable[[any, any], Tuple[bool, str]]):
@@ -38,44 +34,46 @@ class RiskManager:
 
     def validate(self, order, market_price: Dict[str, float], portfolio) -> bool:
         logger.debug("Validating order: %s", order)
-        now = order.timestamp
+        today = order.timestamp
         # 当日初始
-        if self.current_date != now:
-            self.current_date = now
-            self.daily_loss = 0.0
-            self.daily_trades = 0
+        if self.current_date != today:
+            self.current_date = today
             logger.debug("Date changed, reset daily loss and trades")
 
-        # 1. 持仓量限制
+        # 1) 持仓上限：按市值比例
         pos = portfolio.get_position(order.symbol)
-        if order.order_type == OrderType.BUY and pos + order.quantity > self.limits.max_position:
-            logger.warning("Position limit breached for %s: %d+%d>%d", order.symbol, pos, order.quantity, self.limits.max_position)
+        pos_value = (pos + order.quantity) * market_price[order.symbol]
+        total_value = portfolio.current_value(market_price)
+        pct = pos_value / total_value
+        limit_pct = self.limits.max_position_pct * 100
+        logger.debug("[Risk rule=position_pct] Post-order position pct: %.2f%% (limit %.2f%%)", pct * 100,
+                     limit_pct)
+        if pct > self.limits.max_position_pct:
+            logger.warning("[Risk rule=position_pct] Position pct %.2f%% exceeds limit %.2f%%", pct * 100,
+                           self.limits.max_position_pct * 100)
             return False
 
-        # 2. 预计成交后净值及回撤
-        projected_equity = portfolio.cash
-        for sym, qty in portfolio.positions.items():
-            # price = order.price if sym == order.symbol else portfolio.positions[sym]
-            price = market_price.get(sym, 0.0)
-            projected_equity += qty * price
-        self.peak_equity = max(self.peak_equity, projected_equity)
-        drawdown = (self.peak_equity - projected_equity) / self.peak_equity
-        if drawdown > self.limits.max_drawdown:
-            logger.warning("Drawdown limit breached: %.2%>%.2%", drawdown, self.limits.max_drawdown)
+        # 2) 当前回撤
+        drawdown = (portfolio.current_value(market_price) - portfolio.peak_value) / portfolio.peak_value
+        if drawdown < -self.limits.max_drawdown:
+            logger.warning("[Risk rule=drawdown] Drawdown %.2f%% breach", drawdown * 100)
             return False
 
-        # 3. 当日累计亏损
-        pnl = (-order.price * order.quantity) if order.order_type in (OrderType.BUY,) else (
-                    order.price * order.quantity)
-        self.daily_loss += pnl
-        if self.limits.max_daily_loss is not None and abs(self.daily_loss) > self.limits.max_daily_loss:
-            logger.warning("Daily loss limit breached: %s>%s", abs(self.daily_loss), self.limits.max_daily_loss)
+        # 3) 单日最大亏损：按比例
+        # today_pnl = portfolio.calculate_today_pnl(order, market_price)
+        today_pnl = order.pnl(market_price)
+        pnl_pct = today_pnl / total_value
+        logger.debug("[Risk rule=pnl_pct] Today's P&L: %.2f%% (limit -%.2f%%)", pnl_pct * 100,
+                     self.limits.max_daily_loss_pct * 100)
+        if pnl_pct < -self.limits.max_daily_loss_pct:
+            logger.warning("[Risk rule=pnl_pct] Daily loss %.2f%% exceeds limit", pnl_pct * 100)
             return False
 
         # 4. 当日交易次数
-        self.daily_trades += 1
-        if self.limits.max_daily_trades is not None and self.daily_trades > self.limits.max_daily_trades:
-            logger.warning("Daily trades limit breached: %d>%d", self.daily_trades, self.limits.max_daily_trades)
+        trades = portfolio.trades_today_count()
+        if self.limits.max_daily_trades is not None and trades > self.limits.max_daily_trades:
+            logger.warning("[Risk rule=max_daily_trades] Daily trades limit breached: %d>%d", trades,
+                           self.limits.max_daily_trades)
             return False
 
         # 5. 自定义风控规则

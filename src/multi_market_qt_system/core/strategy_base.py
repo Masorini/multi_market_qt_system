@@ -62,8 +62,7 @@ class StrategyBase(ABC):
                     timestamp: Any,
                     symbol: str,
                     action: Literal['BUY', 'SELL', 'SHORT', 'COVER'],
-                    price: float,
-                    quantity: int) -> None:
+                    price: float) -> None:
         """
         缓存交易信号
         """
@@ -72,7 +71,6 @@ class StrategyBase(ABC):
             'symbol': symbol,
             'action': action,
             'price': price,
-            'quantity': quantity
         }
         logger.debug("Strategy %s emit signal: %s", self.name, signal)
         self.signals.append(signal)

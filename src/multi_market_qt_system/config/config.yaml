@@ -1,6 +1,6 @@
 mode: backtest            # backtest 或 live
 
-market_data:              # 数据源配置
+market_data: # 数据源配置
   source: openbb          # openbb 或 vnpy
 
 brokers:
@@ -18,13 +18,14 @@ strategy:
   params:
     short_window: 20
     long_window: 50
-    trade_size: 20
+    # trade_size: 20 # 由 PositionSizer 决定，故注释掉 trade_size, 新增 trade_pct
+    trade_pct: 0.05     # 每次最多用 5% 资金下单
 
 risk_control:
-  max_position: 100
-  max_drawdown: 0.2
-  max_daily_loss: 5000      # 单日最大亏损（以账户基准货币计）
-  max_daily_trades: 20      # 单日最多交易次数
+  max_position_pct: 0.1     # 单标的最大持仓比例
+  max_drawdown: 0.2       # 20% 回撤
+  max_daily_loss_pct: 0.02   # 单日最大亏损比例
+  max_daily_trades: 20       # 单日最多交易次数
 
 # 新增全局交易成本参数
 initial_cash: 200000
